@@ -1,12 +1,102 @@
 # ns
-no cmd no amd ,build a new bmd
+orange funny define
 
 ## what about ns ?
 
-ns is a plugin without any cmd or amd grammar rules, it is easier to organize variables
+1. ns is a plugin without any cmd or amd grammar rules
+2. it is easier to organize variables
+3. it is easy to use
+4. for nodejs or browser
 
-# ns is for phiz or anybody
+## how to use
 
+ 1. download `ns` and import it
+```
+require('./ns')
+```
+or
+```
+<script type="text/javascript" src="script/ns.js">
+```
+2. use `ns("key")`
+```
+// if it is exist in global or window
+// it will be throw an error 
+//namespace should not be cover
+//we want namespace match file-name or plugin-name as much as possible
+ns('namespace');
 
-# Apache License 2.0
+//use namespace
+namespace(...)
+```
+
+### 1.define basic variables
+
+```
+//define ns whit demo
+ns('demo');
+```
+```
+//use demo
+//whit basic value
+demo("name","value");
+demo("name") //--> get "value"
+```
+```
+//cover name value
+//if false or not 
+//it will be throw an exist key error
+demo("name","name",true);
+demo("name") //--> get "name"
+```
+```
+//with function operation
+//if params is null 
+//it could not be operation
+demo("operation",function(a,b,c){
+    return a+b+c;
+},1,2,3);
+//it just store after function operation
+demo("operation");//--> get "6";
+```
+### 2.define function
+> cover variables see `1. define basic variables`
+```
+//define ns with fn
+ns('fn');
+```
+
+```
+fn("dosomething",function(param){
+    return param;
+});
+
+fn("dosomething")("todo");//-- get "todo"
+```
+
+```
+fn("next",function(next){
+    //if params is not null
+    //must return function
+    //here is an closure
+    return function(param){
+        return next + param;
+    }
+},1);
+fn("next")(1); //get 2
+```
+### 2.define object
+> cover variables see `1. define basic variables`
+```
+ns('obj')
+```
+```
+obj("map",{key:"value"});
+obj("map");// -->get {key:"value"}
+```
+
+#  Apache License 2.0
 Copyright 2017 @arefn.cn
+
+
+
