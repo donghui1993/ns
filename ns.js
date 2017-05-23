@@ -126,7 +126,11 @@
 
                 if ((cover || _plugin === undefined)) {
                     if (params !== undefined) {
-                        _plugin = (registObject).apply(this, params);
+                        if(isFn(registObject)){
+                            _plugin = (registObject).apply(this, params);
+                        }else{
+                            _plugin = registObject;
+                        }
                         _isPlugin = isPlugin(_plugin);
                     } else {
                         _plugin = registObject;
