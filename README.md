@@ -11,15 +11,15 @@ orange funny define
 ## how to use
 
  1. download `ns` and import it
-```
+```javascript
 require('./ns')
 ```
 or
-```
+```javascript
 <script type="text/javascript" src="script/ns.js">
 ```
 2. use `ns("key")`
-```
+```javascript
 // if it is exist in global or window
 // it will be throw an error 
 //namespace should not be cover
@@ -32,24 +32,27 @@ namespace(...)
 
 ### 1.define basic variables
 
-```
+```javascript
 //define ns whit demo
 ns('demo');
 ```
-```
+
+```javascript
 //use demo
 //whit basic value
 demo("name","value");
 demo("name") //--> get "value"
 ```
-```
+
+```javascript
 //cover name value
 //if false or not 
 //it will be throw an exist key error
 demo("name","name",true);
 demo("name") //--> get "name"
 ```
-```
+
+```javascript
 //with function operation
 //if params is null 
 //it could not be operation
@@ -61,12 +64,12 @@ demo("operation");//--> get "6";
 ```
 ### 2.define function
 > cover variables see `1. define basic variables`
-```
+```javascript
 //define ns with fn
 ns('fn');
 ```
 
-```
+```javascript
 fn("dosomething",function(param){
     return param;
 });
@@ -74,7 +77,7 @@ fn("dosomething",function(param){
 fn("dosomething")("todo");//-- get "todo"
 ```
 
-```
+```javascript
 fn("next",function(next){
     //if params is not null
     //must return function
@@ -87,10 +90,10 @@ fn("next")(1); //get 2
 ```
 ### 2.define object
 > cover variables see `1. define basic variables`
-```
+```javascript
 ns('obj')
 ```
-```
+```javascript
 obj("map",{key:"value"});
 obj("map");// -->get {key:"value"}
 ```
