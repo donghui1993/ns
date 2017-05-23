@@ -9,4 +9,4 @@ ns is a plugin without any cmd or amd grammar rules, it is easier to organize va
 
 
 # Apache License 2.0
-Copyright {2017} {phiz}
+Copyright 2017 @arefn.cn
