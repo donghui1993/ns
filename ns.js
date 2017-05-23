@@ -1,15 +1,21 @@
-; (function (name) {
+; (function (name, properties) {
+    properties = properties || {};
+
     var slice = Array.prototype.slice,
         splice = Array.prototype.splice,
+        logLevel = getLogLevel(properties),
         LOGGER = {
             info: function (msg) {
-                this.log("INFO", msg)
+                if(logLevel<1)
+                    this.log("INFO", msg)
             },
             debug: function (msg) {
-                this.log("DEBUG", msg)
+                if(logLevel<2)
+                    this.log("DEBUG", msg)
             },
             error: function (msg) {
-                this.log("ERROR", msg)
+                if(logLevel<3)
+                    this.log("ERROR", msg)
             },
             log: function (type, msg) {
                 console.log("[" + type + "]", ">>>", msg)
@@ -36,6 +42,16 @@
         isFn = function (fnlike) {
             return typeof fnlike === 'function';
         }
+    function getLogLevel(properties) {
+        let level = ((properties.loglevel || "info") + "").toUpperCase();
+        if(level === "DEBUG"){
+            return 1;
+        }
+        if(level === "ERROR"){
+            return 2;
+        }
+        return 0;
+    }
     function D(ns) {
         let fn = this.fn = new Function("let _fn= this['" + ns + "'];return _fn.init.apply(_fn,arguments);");
         fn.pluginCatch = {}
@@ -126,9 +142,9 @@
 
                 if ((cover || _plugin === undefined)) {
                     if (params !== undefined) {
-                        if(isFn(registObject)){
+                        if (isFn(registObject)) {
                             _plugin = (registObject).apply(this, params);
-                        }else{
+                        } else {
                             _plugin = registObject;
                         }
                         _isPlugin = isPlugin(_plugin);
@@ -139,10 +155,10 @@
                     LOGGER.throw("plugin name [ " + pluginKey + " ]  has been defined");
                 }
                 if (_isPlugin) {
-                    if(isFn(registObject)){
+                    if (isFn(registObject)) {
                         this.pluginCatch[pluginKey] = _plugin.bind(this);
-                    }else{
-                         this.pluginCatch[pluginKey] = _plugin;
+                    } else {
+                        this.pluginCatch[pluginKey] = _plugin;
                     }
                 } else {
                     this.variableCatch[pluginKey] = _plugin;
@@ -172,6 +188,9 @@
                 return _plugin;
             }
         }
+        fn.set = function (pluginKey, value) {
+            return this(pluginKey, value, true);
+        }
         return this.fn;
     }
 
@@ -187,4 +206,4 @@
         this[ns] = new D(ns);
     }
 
-})('ns');
+})('ns', {loglevel:"DEBUG"});
