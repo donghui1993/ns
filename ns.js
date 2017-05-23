@@ -40,7 +40,7 @@
             return arraylike instanceof Array;
         },
         isPluginKey = function (pluginKeylike) {
-            return !!pluginKeylike && typeof pluginKeylike === 'string';
+            return typeof pluginKeylike === 'string' && pluginKeylike.trim() !== "";
         },
         isPlugin = function (pluginlike) {
             return isObject(pluginlike) || isFn(pluginlike);
@@ -193,12 +193,13 @@
              * @return {function|object}      已经注册成功的function或者object
              */
             function __regist_component(pluginKey, registObject, params, cover) {
+
+                if (!isPluginKey(pluginKey)) {
+                    LOGGER.throw("plugin key should be string type and not empty");
+                }
+                
                 var _isPlugin = isPlugin(registObject);
                 var _plugin = __get_component.call(this, pluginKey, "must");
-
-                if (!isPluginKey(pluginKey) && _plugin !== undefined) {
-                    LOGGER.throw("plugin key should be string type");
-                }
 
                 if (cover === true) {
                     LOGGER.info("plugin name [ " + pluginKey + " ]  could be cover");
