@@ -63,8 +63,26 @@
 
     function D(ns) {
         let fn = this.fn = new Function("let _fn= this['" + ns + "'];  return this.calls(_fn,arguments);");
-        fn.pluginCatch = {}
-        fn.variableCatch = {}
+        // 当前对象上附加的组件内容
+        Object.defineProperty(this.fn, "pluginCatch", { value: {} });
+
+        fn.getPlugin = function(pluginKey) {
+            return this.pluginCatch[pluginKey];
+        }
+        fn.setPlugin = function(pluginKey, value) {
+                this.pluginCatch[pluginKey] = value;
+                return value;
+            }
+            // 当前对象上附加的变量内容
+        Object.defineProperty(this.fn, "variableCatch", { value: {} });
+
+        fn.getVariable = function(pluginKey) {
+            return this.variableCatch[pluginKey];
+        }
+        fn.setVariable = function(pluginKey, value) {
+                this.variableCatch[pluginKey] = value;
+                return value;
+            }
             /**
              * 设置已存在的plugin值，如果不存在就报一个错
              * @param {String} pluginKey 组件名称
@@ -81,15 +99,12 @@
         fn.run = function(pluginKey) {
                 var object = this(pluginKey);
                 try {
-                    if (isObject(object)) {
+                    //执行是否是一个批量执行列表，并且只执行function
+                    if (isObject(object) || isArray(object)) {
                         for (var i in object) {
                             if (isFn(object[i])) {
                                 object[i]();
                             }
-                        }
-                    } else if (isArray(object)) {
-                        for (var i in object) {
-                            object[i]();
                         }
                     } else {
                         return false;
@@ -176,13 +191,12 @@
              * @return {function|object}      已经注册成功的function或者object
              */
             function __regist_component(pluginKey, registObject, params, cover) {
-
-                if (!isPluginKey(pluginKey)) {
-                    LOGGER.throw("plugin key should be string type");
-                }
-
                 var _isPlugin = isPlugin(registObject);
                 var _plugin = __get_component.call(this, pluginKey, "must");
+
+                if (!isPluginKey(pluginKey) && _plugin !== undefined) {
+                    LOGGER.throw("plugin key should be string type");
+                }
 
                 if (cover === true) {
                     LOGGER.info("plugin name [ " + pluginKey + " ]  could be cover");
@@ -204,12 +218,12 @@
                 }
                 if (_isPlugin) {
                     if (isFn(registObject)) {
-                        this.pluginCatch[pluginKey] = _plugin.bind(this);
+                        this.setPlugin(pluginKey, _plugin.bind(this));
                     } else {
-                        this.pluginCatch[pluginKey] = _plugin;
+                        this.setPlugin(pluginKey, _plugin);
                     }
                 } else {
-                    this.variableCatch[pluginKey] = _plugin;
+                    this.setVariable(pluginKey, _plugin);
                 }
 
                 return _plugin;
@@ -228,7 +242,7 @@
                 if (typeof pluginKey !== 'string')
                     LOGGER.throw("plugin key should be string type");
 
-                var _plugin = this.pluginCatch[pluginKey] || this.variableCatch[pluginKey];
+                var _plugin = this.getPlugin(pluginKey) || this.getVariable(pluginKey);
 
                 if (!must && _plugin === undefined)
                     LOGGER.throw("plugin name [ " + pluginKey + " ] should be regist at first");
