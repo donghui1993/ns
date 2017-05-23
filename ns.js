@@ -66,7 +66,7 @@
 
             //调整params
             //如果当前参数列表是数组类型从参数开始位置到paramEnd的位置覆盖
-            if (len > 3) {
+            if (len >= 3) {
                 if (typeof cover === 'boolean') {
                     paramEnd -= 1;
                 }
@@ -139,7 +139,11 @@
                     LOGGER.throw("plugin name [ " + pluginKey + " ]  has been defined");
                 }
                 if (_isPlugin) {
-                    this.pluginCatch[pluginKey] = _plugin.bind(this);
+                    if(isFn(registObject)){
+                        this.pluginCatch[pluginKey] = _plugin.bind(this);
+                    }else{
+                         this.pluginCatch[pluginKey] = _plugin;
+                    }
                 } else {
                     this.variableCatch[pluginKey] = _plugin;
                 }
