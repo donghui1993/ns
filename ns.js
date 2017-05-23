@@ -1,62 +1,110 @@
-; (function (name, properties) {
+;
+(function(name, properties) {
     properties = properties || {};
 
     var slice = Array.prototype.slice,
         splice = Array.prototype.splice,
         logLevel = getLogLevel(properties),
         LOGGER = {
-            info: function (msg) {
-                if(logLevel<1)
+            info: function(msg) {
+                if (logLevel < 1)
                     this.log("INFO", msg)
             },
-            debug: function (msg) {
-                if(logLevel<2)
+            debug: function(msg) {
+                if (logLevel < 2)
                     this.log("DEBUG", msg)
             },
-            error: function (msg) {
-                if(logLevel<3)
+            error: function(msg) {
+                if (logLevel < 3)
                     this.log("ERROR", msg)
             },
-            log: function (type, msg) {
+            log: function(type, msg) {
                 console.log("[" + type + "]", ">>>", msg)
             },
-            throw: function (msg) {
+            throw: function(msg) {
                 throw Error("[ ERROR ] >>> " + msg);
             }
         },
-        orange = function () {
+        orange = function() {
 
         },
-        isArray = function (arraylike) {
+        isArray = function(arraylike) {
             return arraylike instanceof Array;
         },
-        isPluginKey = function (pluginKeylike) {
+        isPluginKey = function(pluginKeylike) {
             return typeof pluginKeylike === 'string';
         },
-        isPlugin = function (pluginlike) {
+        isPlugin = function(pluginlike) {
             return isObject(pluginlike) || isFn(pluginlike);
         },
-        isObject = function (objectlike) {
+        isObject = function(objectlike) {
             return typeof objectlike === 'object' && !isArray(objectlike);
         },
-        isFn = function (fnlike) {
+        isFn = function(fnlike) {
             return typeof fnlike === 'function';
         }
+        /**
+         * 获取日志等级
+         * @param  {Object} properties 配置文件
+         * @return {Number}            日志等级
+         */
     function getLogLevel(properties) {
         let level = ((properties.loglevel || "info") + "").toUpperCase();
-        if(level === "DEBUG"){
+        if (level === "DEBUG") {
             return 1;
         }
-        if(level === "ERROR"){
+        if (level === "ERROR") {
             return 2;
         }
         return 0;
     }
+
+
+
     function D(ns) {
-        let fn = this.fn = new Function("let _fn= this['" + ns + "'];return _fn.init.apply(_fn,arguments);");
+        let fn = this.fn = new Function("let _fn= this['" + ns + "'];  return this.calls(_fn,arguments);");
         fn.pluginCatch = {}
         fn.variableCatch = {}
-        fn.init = function () {
+            /**
+             * 设置已存在的plugin值，如果不存在就报一个错
+             * @param {String} pluginKey 组件名称
+             * @param {Object} value     需要赋值的内容
+             */
+        fn.set = function(pluginKey, value) {
+                return this(pluginKey, value, true);
+            }
+            /**
+             * 批量执行一组function
+             * @param  {String} pluginKey 需要执行的组件名称
+             * @return {Boolean}           执行是否成功
+             */
+        fn.run = function(pluginKey) {
+                var object = this(pluginKey);
+                try {
+                    if (isObject(object)) {
+                        for (var i in object) {
+                            if (isFn(object[i])) {
+                                object[i]();
+                            }
+                        }
+                    } else if (isArray(object)) {
+                        for (var i in object) {
+                            object[i]();
+                        }
+                    } else {
+                        return false;
+                    }
+                } catch (e) {
+                    console.error(e);
+                    return false;
+                }
+                return true;
+            }
+            /**
+             * 初始化操作，也是后续的操作基本
+             * @return {anything} 根据参数不同得到不同执行结果
+             */
+        fn.init = function() {
             var args = slice.call(arguments), //参数列表
                 len = args.length, //参数长度
                 last = len - 1, //最后一位index
@@ -188,13 +236,15 @@
                 return _plugin;
             }
         }
-        fn.set = function (pluginKey, value) {
-            return this(pluginKey, value, true);
-        }
+
         return this.fn;
     }
 
-    this[name] = function (ns) {
+    this["calls"] = function(obj, args) {
+        return obj.init.apply(obj, args);
+    }
+
+    this[name] = function(ns) {
         try {
             if (this[ns] !== undefined) {
                 LOGGER.throw("[ " + ns + " ] has already exist in ns")
@@ -206,4 +256,4 @@
         this[ns] = new D(ns);
     }
 
-})('ns', {loglevel:"DEBUG"});
+})('ns');
