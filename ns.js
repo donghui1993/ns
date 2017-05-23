@@ -1,53 +1,61 @@
+/**
+ * ns.js is a plugin without any of other modules
+ * it is just for namespace organize
+ * our aim is easier for javascript package
+ * 
+ * @author:donghui or called phiz
+ * Apache License 2.0
+ */
 ;
-(function(name, properties) {
+(function (name, properties) {
     properties = properties || {};
 
     var slice = Array.prototype.slice,
         splice = Array.prototype.splice,
         logLevel = getLogLevel(properties),
         LOGGER = {
-            info: function(msg) {
+            info: function (msg) {
                 if (logLevel < 1)
                     this.log("INFO", msg)
             },
-            debug: function(msg) {
+            debug: function (msg) {
                 if (logLevel < 2)
                     this.log("DEBUG", msg)
             },
-            error: function(msg) {
+            error: function (msg) {
                 if (logLevel < 3)
                     this.log("ERROR", msg)
             },
-            log: function(type, msg) {
+            log: function (type, msg) {
                 console.log("[" + type + "]", ">>>", msg)
             },
-            throw: function(msg) {
+            throw: function (msg) {
                 throw Error("[ ERROR ] >>> " + msg);
             }
         },
-        orange = function() {
+        orange = function () {
 
         },
-        isArray = function(arraylike) {
+        isArray = function (arraylike) {
             return arraylike instanceof Array;
         },
-        isPluginKey = function(pluginKeylike) {
-            return typeof pluginKeylike === 'string';
+        isPluginKey = function (pluginKeylike) {
+            return !!pluginKeylike && typeof pluginKeylike === 'string';
         },
-        isPlugin = function(pluginlike) {
+        isPlugin = function (pluginlike) {
             return isObject(pluginlike) || isFn(pluginlike);
         },
-        isObject = function(objectlike) {
+        isObject = function (objectlike) {
             return typeof objectlike === 'object' && !isArray(objectlike);
         },
-        isFn = function(fnlike) {
+        isFn = function (fnlike) {
             return typeof fnlike === 'function';
         }
-        /**
-         * 获取日志等级
-         * @param  {Object} properties 配置文件
-         * @return {Number}            日志等级
-         */
+    /**
+     * 获取日志等级
+     * @param  {Object} properties 配置文件
+     * @return {Number}            日志等级
+     */
     function getLogLevel(properties) {
         let level = ((properties.loglevel || "info") + "").toUpperCase();
         if (level === "DEBUG") {
@@ -59,67 +67,65 @@
         return 0;
     }
 
-
-
     function D(ns) {
         let fn = this.fn = new Function("let _fn= this['" + ns + "'];  return this.calls(_fn,arguments);");
         // 当前对象上附加的组件内容
         Object.defineProperty(this.fn, "pluginCatch", { value: {} });
 
-        fn.getPlugin = function(pluginKey) {
+        fn.getPlugin = function (pluginKey) {
             return this.pluginCatch[pluginKey];
         }
-        fn.setPlugin = function(pluginKey, value) {
-                this.pluginCatch[pluginKey] = value;
-                return value;
-            }
-            // 当前对象上附加的变量内容
+        fn.setPlugin = function (pluginKey, value) {
+            this.pluginCatch[pluginKey] = value;
+            return value;
+        }
+        // 当前对象上附加的变量内容
         Object.defineProperty(this.fn, "variableCatch", { value: {} });
 
-        fn.getVariable = function(pluginKey) {
+        fn.getVariable = function (pluginKey) {
             return this.variableCatch[pluginKey];
         }
-        fn.setVariable = function(pluginKey, value) {
-                this.variableCatch[pluginKey] = value;
-                return value;
-            }
-            /**
-             * 设置已存在的plugin值，如果不存在就报一个错
-             * @param {String} pluginKey 组件名称
-             * @param {Object} value     需要赋值的内容
-             */
-        fn.set = function(pluginKey, value) {
-                return this(pluginKey, value, true);
-            }
-            /**
-             * 批量执行一组function
-             * @param  {String} pluginKey 需要执行的组件名称
-             * @return {Boolean}           执行是否成功
-             */
-        fn.run = function(pluginKey) {
-                var object = this(pluginKey);
-                try {
-                    //执行是否是一个批量执行列表，并且只执行function
-                    if (isObject(object) || isArray(object)) {
-                        for (var i in object) {
-                            if (isFn(object[i])) {
-                                object[i]();
-                            }
+        fn.setVariable = function (pluginKey, value) {
+            this.variableCatch[pluginKey] = value;
+            return value;
+        }
+        /**
+         * 设置已存在的plugin值，如果不存在就报一个错
+         * @param {String} pluginKey 组件名称
+         * @param {Object} value     需要赋值的内容
+         */
+        fn.set = function (pluginKey, value) {
+            return this(pluginKey, value, true);
+        }
+        /**
+         * 批量执行一组function
+         * @param  {String} pluginKey 需要执行的组件名称
+         * @return {Boolean}           执行是否成功
+         */
+        fn.run = function (pluginKey) {
+            var object = this(pluginKey);
+            try {
+                //执行是否是一个批量执行列表，并且只执行function
+                if (isObject(object) || isArray(object)) {
+                    for (var i in object) {
+                        if (isFn(object[i])) {
+                            object[i]();
                         }
-                    } else {
-                        return false;
                     }
-                } catch (e) {
-                    console.error(e);
+                } else {
                     return false;
                 }
-                return true;
+            } catch (e) {
+                console.error(e);
+                return false;
             }
-            /**
-             * 初始化操作，也是后续的操作基本
-             * @return {anything} 根据参数不同得到不同执行结果
-             */
-        fn.init = function() {
+            return true;
+        }
+        /**
+         * 初始化操作，也是后续的操作基本
+         * @return {anything} 根据参数不同得到不同执行结果
+         */
+        fn.init = function () {
             var args = slice.call(arguments), //参数列表
                 len = args.length, //参数长度
                 last = len - 1, //最后一位index
@@ -130,10 +136,6 @@
                 params = args[first + 2], //注册的参数列表
                 cover = args[last], //覆盖注册
                 switchKey = len //选项值
-
-
-
-
 
             //如果参数的第三位是boolean类型，并且第四位为undefined
             //则表明第三位应该是cover
@@ -254,11 +256,11 @@
         return this.fn;
     }
 
-    this["calls"] = function(obj, args) {
+    this["calls"] = function (obj, args) {
         return obj.init.apply(obj, args);
     }
 
-    this[name] = function(ns) {
+    this[name] = function (ns) {
         try {
             if (this[ns] !== undefined) {
                 LOGGER.throw("[ " + ns + " ] has already exist in ns")
