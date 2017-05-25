@@ -22,7 +22,7 @@ or
 <script type="text/javascript" src="script/ns.js">
 ```
 
-2. use `ns("key")`
+2. use ns("key")
 
 ```javascript
 // if it is exist in global or window
