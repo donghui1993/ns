@@ -1,5 +1,26 @@
 ;
 (function (name, propertis) {
+    var topKey = "window" in this ? "window" : "global" in this ? "global" : "basic";
+    var existKey = "|break|do|instanceof|typeof|\
+                case|else|new|var|\
+                catch|finally|return|void|\
+                continue|for|switch|while|\
+                debugger|function|this|with|\
+                default|if|throw|delete|\
+                in|try|abstract|enum|int|\
+                short|boolean|export|interface|static\
+                byte|extends|long|super|\
+                char|final|native|synchronized|\
+                class|float|package|throws|\
+                const|goto|private|transient|\
+                debugger|implements|protected|volatile|\
+                double|import|public|\
+                class|enum|extends|super|\
+                const|export|import|\
+                implements|package|public|interface|\
+                private|static|let|protected|\
+                yield|";
+
     var orange = function () {
         Object.defineProperty(this, "pluginCatch", { value: {}, enumerable: true });
         Object.defineProperty(this, "variableCatch", { value: {}, enumerable: true });
@@ -35,6 +56,8 @@
                 }
                 if (o.isArray(params)) {
                     params.concat(o.splice.call(args, 3, paramEnd));
+                } else if (switchKey == 3 && params == cover) {
+                    params = null;
                 } else {
                     params = o.splice.call(args, 2, paramEnd);
                 }
@@ -42,10 +65,8 @@
             switch (switchKey) {
                 case 1:
                     return this.getVariable(pluginKey);
-                case 2:
-                    return this.setVariable(pluginKey, plugin, params, cover);
                 default:
-                    o.LOGGER.throw("arguments error");
+                    return this.setVariable(pluginKey, plugin, params, cover);
             }
         }
     }
@@ -53,7 +74,6 @@
     orange.slice = slice = Array.prototype.slice;
     orange.splice = Array.prototype.splice;
 
-    orange.orange = function () { };
     orange.isPluginKey = function (o) {
         return typeof o === 'string' && o.trim() !== "";
     }
@@ -89,32 +109,54 @@
             throw Error("[ ERROR ] >>> " + msg);
         }
     }
-    orange.fn = orange.prototype = {
-        get:function(){
+    orange.prototype = {
+        exist: function (pluginKey) {
+            return pluginKey in this.pluginCatch || pluginKey in this.variableCatch;
+        },
+        get: function () {
             return this.getVariable(this._prekey);
         },
-        set:function(plugin,params){
-           return this.setVariable (this._prekey,plugin,params,true);
+        set: function (plugin, params) {
+            return this.setVariable(this._prekey, plugin, params, true);
+        },
+        exec: function () {
+            var object = this.get(), o = orange, params = o.slice.call(arguments), index = 0;
+            try {
+                if (o.isObject(object) || o.isArray(object)) {
+                    for (var i in object) {
+                        if (o.isFunction(object[i])) {
+                            object[i].call(this, params[index++]);
+                        }
+                    }
+                } else if (o.isFunction(object)) {
+                    object.apply(this, params);
+                } else {
+                    return false;
+                }
+            } catch (e) {
+                console.error(e);
+                return false;
+            }
+            return true;
         },
         getVariable: function (pluginKey, must) {
             let val = this.pluginCatch[pluginKey] || this.variableCatch[pluginKey];
-            if (val === undefined && must !== 'must') {
+            if (!this.exist(pluginKey)) {
                 orange.LOGGER.error("[ " + pluginKey + " ] should be define");
             }
             return val;
         },
         setVariable: function (pluginKey, plugin, params, cover) {
-            var val = this.getVariable(pluginKey, "must");
-            if (orange.isPlugin(val) && !cover) {
-                orange.LOGGER.throw("[ " + pluginKey + " ] try to set plugin but it is exist or cover is true")
+            if (this.exist(pluginKey) && !cover) {
+                orange.LOGGER.throw("[ " + pluginKey + " ] try to set plugin but it is exist and cover is false")
             }
             if (orange.isArray(params)) {
-                return this.setVariableWithParams(pluginKey, plugin, params, cover);
+                this.setVariableWithParams(pluginKey, plugin, params, cover);
             }
-            if(orange.isFunction(plugin)){
-                 delete this.variableCatch[pluginKey];
-                 this.pluginCatch[pluginKey] = plugin;
-            }else{
+            else if (orange.isFunction(plugin)) {
+                delete this.variableCatch[pluginKey];
+                this.pluginCatch[pluginKey] = plugin;
+            } else {
                 delete this.pluginCatch[pluginKey];
                 this.variableCatch[pluginKey] = plugin;
             }
@@ -132,29 +174,20 @@
                     this.variableCatch[pluginKey] = val;
                 }
             }
-            return this;
         }
     }
     function init(name) {
         var name = name;
-        if (this[name] != undefined) {
-            try {
-                orange.LOGGER.throw("[ " + name + " ] has already exist ,please try another")
-            } catch (error) {
-                throw error;
-            }
-        }
+        validKeyword(name, topKey);
         this[name] = function (ns) {
-            try {
-                if (!orange.isPluginKey(ns)) { orange.LOGGER.throw("[ " + ns + " ] must be string type and not be empty") }
-                if (this[ns] !== undefined) { orange.LOGGER.throw("[ " + ns + " ] has already exist in << " + name + " >>") }
-            } catch (error) {
-                throw error;
-            }
+            validKeyword(ns, topKey);
             this[ns] = new orange();
         }
     };
+    function validKeyword(ns, name) {
+        if (this[ns] !== undefined) { orange.LOGGER.throw("[ " + ns + " ] has already exist in << " + name + " >>") }
+        if (!orange.isPluginKey(ns) || new RegExp("\\|" + ns + "\\|").test(existKey)) { orange.LOGGER.throw("[ " + ns + " ] is not a valid keyword") }
+    }
+
     init(name);
 })("ns");
-ns("test");
-console.log(">>",test("test", "1").set(function(a,b){return a+b},[1,2]).get())
