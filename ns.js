@@ -1,3 +1,11 @@
+/**
+ * ns.js is a plugin without any of other modules
+ * it is just for namespace organize
+ * our aim is easier for javascript package
+ * 
+ * @author:donghui or called phiz
+ * Apache License 2.0
+ */
 ;
 (function (name, propertis) {
     var topKey = "window" in this ? "window" : "global" in this ? "global" : "basic";
@@ -24,8 +32,7 @@
     var orange = function () {
         Object.defineProperty(this, "pluginCatch", { value: {}, enumerable: true });
         Object.defineProperty(this, "variableCatch", { value: {}, enumerable: true });
-        this.fn = fn.bind(this);
-        return this.fn;
+
         function fn() {
             var args = slice.call(arguments),
                 len = args.length,
@@ -62,63 +69,49 @@
                     params = o.splice.call(args, 2, paramEnd);
                 }
             }
-            switch (switchKey) {
-                case 1:
-                    return this.getVariable(pluginKey);
-                default:
-                    return this.setVariable(pluginKey, plugin, params, cover);
+            if (switchKey === 1) {
+                return this.getVariable(pluginKey);
             }
+            return this.setVariable(pluginKey, plugin, params, cover);
+
         }
+        this.fn = fn.bind(this);
+        this.fn.extra = function (obj) {
+            var o = orange;
+            if (!o.isObject(obj)) {
+                o.LOGGER.error('param should be an object');
+                obj = {}
+            }
+            for (var key in obj) {
+                if (o.isFunction(obj[key]) && !(key in o)) {
+                    o.fn[key] = obj[key];
+                }
+            }
+            return this;
+        }
+        return this.fn;
     }
 
     orange.slice = slice = Array.prototype.slice;
     orange.splice = Array.prototype.splice;
-
-    orange.isPluginKey = function (o) {
-        return typeof o === 'string' && o.trim() !== "";
-    }
-    orange.isBoolean = function (o) {
-        return typeof o === 'boolean'
-    }
-    orange.isFunction = function (o) {
-        return typeof o === 'function';
-    }
-    orange.isObject = function (o) {
-        return typeof o === 'object' && !orange.isArray(o);
-    }
-    orange.isArray = function (o) {
-        return o instanceof Array;
-    }
-    orange.isPlugin = function (o) {
-        return o != null;
-    }
+    orange.isPluginKey = function (o) { return typeof o === 'string' && o.trim() !== ""; }
+    orange.isBoolean = function (o) { return typeof o === 'boolean' }
+    orange.isFunction = function (o) { return typeof o === 'function'; }
+    orange.isObject = function (o) { return typeof o === 'object' && !orange.isArray(o); }
+    orange.isArray = function (o) { return o instanceof Array; }
+    orange.isPlugin = function (o) { return o != null; }
     orange.LOGGER = {
-        info: function (msg) {
-            this.log("INFO", msg)
-        },
-        debug: function (msg) {
-            this.log("DEBUG", msg)
-        },
-        error: function (msg) {
-            this.log("ERROR", msg)
-        },
-        log: function (type, msg) {
-            console["info" || type.toLowerCase()]("[" + type + "]", ">>>", msg);
-        },
-        throw: function (msg) {
-            throw Error("[ ERROR ] >>> " + msg);
-        }
+        info: function (msg) { this.log("INFO", msg) },
+        debug: function (msg) { this.log("DEBUG", msg) },
+        error: function (msg) { this.log("ERROR", msg) },
+        log: function (type, msg) { console["info" || type.toLowerCase()]("[" + type + "]", ">>>", msg); },
+        throw: function (msg) { throw Error("[ ERROR ] >>> " + msg); }
     }
-    orange.prototype = {
-        exist: function (pluginKey) {
-            return pluginKey in this.pluginCatch || pluginKey in this.variableCatch;
-        },
-        get: function () {
-            return this.getVariable(this._prekey);
-        },
-        set: function (plugin, params) {
-            return this.setVariable(this._prekey, plugin, params, true);
-        },
+    orange.fn = orange.prototype = {
+        constructor:orange,
+        exist: function (pluginKey) { return pluginKey in this.pluginCatch || pluginKey in this.variableCatch; },
+        get: function (pluginKey) { return this.getVariable(pluginKey || this._prekey); },
+        set: function (plugin, params) { return this.setVariable(this._prekey, plugin, params, true); },
         exec: function () {
             var object = this.get(), o = orange, params = o.slice.call(arguments), index = 0;
             try {
@@ -188,6 +181,5 @@
         if (this[ns] !== undefined) { orange.LOGGER.throw("[ " + ns + " ] has already exist in << " + name + " >>") }
         if (!orange.isPluginKey(ns) || new RegExp("\\|" + ns + "\\|").test(existKey)) { orange.LOGGER.throw("[ " + ns + " ] is not a valid keyword") }
     }
-
     init(name);
 })("ns");
