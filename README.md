@@ -11,14 +11,19 @@ orange funny define
 ## how to use
 
  1. download `ns` and import it
+ 
 ```javascript
 require('./ns')
 ```
+
 or
+
 ```javascript
 <script type="text/javascript" src="script/ns.js">
 ```
+
 2. use `ns("key")`
+
 ```javascript
 // if it is exist in global or window
 // it will be throw an error 
