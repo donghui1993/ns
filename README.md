@@ -64,6 +64,7 @@ demo("operation");//--> get "6";
 ```
 ### 2.define function
 > cover variables see `1. define basic variables`
+
 ```javascript
 //define ns with fn
 ns('fn');
@@ -90,6 +91,7 @@ fn("next")(1); //get 2
 ```
 ### 2.define object
 > cover variables see `1. define basic variables`
+
 ```javascript
 ns('obj')
 ```
