@@ -27,7 +27,7 @@
                 const|export|import|\
                 implements|package|public|interface|\
                 private|static|let|protected|\
-                yield|";
+                yield|global|root|window|";
 
     var orange = function () {
         Object.defineProperty(this, "pluginCatch", { value: {}, enumerable: true });
