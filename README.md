@@ -3,7 +3,7 @@ orange funny define
 
 ## what about ns ?
 
-1. ns is a plugin without any cmd or amd grammar rules
+1. ns is a plugin without any cmd or amd grammar rules,it is a proxy model
 2. it is easier to organize variables
 3. it is easy to use
 4. for nodejs or browser
