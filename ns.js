@@ -32,7 +32,7 @@
     var orange = function (params) {
         Object.defineProperty(this, "pluginCatch", { value: {}, enumerable: true });
         Object.defineProperty(this, "variableCatch", { value: {}, enumerable: true });
-        orange.params = params;
+        Object.assign(orange.params,params);
         function fn() {
             var args = slice.call(arguments),
                 len = args.length,
@@ -91,7 +91,7 @@
         }
         return this.fn;
     }
-
+    orange.params = {loglevel:0};
     orange.slice = slice = Array.prototype.slice;
     orange.splice = Array.prototype.splice;
     orange.isPluginKey = function (o) { return typeof o === 'string' && o.trim() !== ""; }
@@ -100,15 +100,16 @@
     orange.isObject = function (o) { return typeof o === 'object' && !orange.isArray(o); }
     orange.isArray = function (o) { return o instanceof Array; }
     orange.isPlugin = function (o) { return o != null; }
-    
+
     orange.fn = orange.prototype = {
         constructor: orange,
         LOGGER: {
-            debug: function (msg) { if (orange.params.loglevel <= 0) this.log("DEBUG", msg) },
-            info: function (msg) { if (orange.params.loglevel <= 1) this.log("INFO", msg) },
-            error: function (msg) { if (orange.params.loglevel <= 2) this.log("ERROR", msg) },
-            throw: function (msg) { if (orange.params.loglevel <= 3) throw Error("[ ERROR ] >>> " + msg); },
-            log: function (type, msg) { console[type.toLowerCase() || "log"]("[" + type + "]", ">>>", msg); }
+            debug: function (msg) { if (orange.params.loglevel < 1) this.log("DEBUG", msg) },
+            info: function (msg) { if (orange.params.loglevel < 2) this.log("INFO", msg) },
+            warn: function (msg) { if (orange.params.loglevel < 3) this.log("WARN", msg) },
+            error: function (msg) { if (orange.params.loglevel < 4) this.log("ERROR", msg) },
+            throw: function (msg) { if (orange.params.loglevel < 5) throw Error("[ ERROR ] >>> " + msg); },
+            log: function (type, msg) { let _type = type.toLowerCase(); _type = _type == "debug" ? "info" : _type; console[_type || "log"]("[" + type + "]", ">>>", msg); }
         },
         exist: function (pluginKey) { return pluginKey in this.pluginCatch || pluginKey in this.variableCatch; },
         get: function (pluginKey) { return this.getVariable(pluginKey || this._prekey); },
@@ -141,15 +142,15 @@
             return val;
         },
         setVariable: function (pluginKey, plugin, params, cover) {
-            if (this.exist(pluginKey) && !cover) {
-                this.LOGGER.throw("[ " + pluginKey + " ] try to set plugin but it is exist and cover is false")
+            if (this.exist(pluginKey) && cover != true) {
+                this.LOGGER.throw("[ " + pluginKey + " ] try to set plugin but it is exist and cover is false");
             }
             if (orange.isArray(params)) {
                 this.setVariableWithParams(pluginKey, plugin, params, cover);
             }
             else if (orange.isFunction(plugin)) {
                 delete this.variableCatch[pluginKey];
-                this.pluginCatch[pluginKey] = plugin;
+                this.pluginCatch[pluginKey] = plugin.bind(this);
             } else {
                 delete this.pluginCatch[pluginKey];
                 this.variableCatch[pluginKey] = plugin;
@@ -180,7 +181,7 @@
         }
     };
     function validKeyword(ns, name) {
-        if (this[ns] !== undefined) { orange.fn.LOGGER.throw("[ " + ns + " ] has already exist in << " + name + " >>") }
+        if (this[ns] !== undefined && !(this[ns] instanceof HTMLElement)) { orange.fn.LOGGER.throw("[ " + ns + " ] has already exist in << " + name + " >>") }
         if (!orange.isPluginKey(ns) || new RegExp("\\|" + ns + "\\|").test(existKey)) { orange.fn.LOGGER.throw("[ " + ns + " ] is not a valid keyword") }
     }
     init(name);
