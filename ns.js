@@ -29,10 +29,10 @@
                 private|static|let|protected|\
                 yield|global|root|window|";
 
-    var orange = function () {
+    var orange = function (params) {
         Object.defineProperty(this, "pluginCatch", { value: {}, enumerable: true });
         Object.defineProperty(this, "variableCatch", { value: {}, enumerable: true });
-
+        orange.params = params;
         function fn() {
             var args = slice.call(arguments),
                 len = args.length,
@@ -47,10 +47,10 @@
                 o = orange
 
             if (!o.isPluginKey(pluginKey)) {
-                o.LOGGER.throw("pluginKey should be string type and not be empty")
+                o.fn.LOGGER.throw("pluginKey should be string type and not be empty")
             }
             if (len > 1 && !o.isPlugin(plugin)) {
-                o.LOGGER.throw("plugin should not be null")
+                o.fn.LOGGER.throw("plugin should not be null")
             }
             if (len > 2) {
                 if (!o.isPlugin(cover) && o.isBoolean(params)) {
@@ -79,7 +79,7 @@
         this.fn.extra = function (obj) {
             var o = orange;
             if (!o.isObject(obj)) {
-                o.LOGGER.error('param should be an object');
+                o.fn.LOGGER.error('param should be an object');
                 obj = {}
             }
             for (var key in obj) {
@@ -100,15 +100,16 @@
     orange.isObject = function (o) { return typeof o === 'object' && !orange.isArray(o); }
     orange.isArray = function (o) { return o instanceof Array; }
     orange.isPlugin = function (o) { return o != null; }
-    orange.LOGGER = {
-        info: function (msg) { this.log("INFO", msg) },
-        debug: function (msg) { this.log("DEBUG", msg) },
-        error: function (msg) { this.log("ERROR", msg) },
-        log: function (type, msg) { console["info" || type.toLowerCase()]("[" + type + "]", ">>>", msg); },
-        throw: function (msg) { throw Error("[ ERROR ] >>> " + msg); }
-    }
+    
     orange.fn = orange.prototype = {
-        constructor:orange,
+        constructor: orange,
+        LOGGER: {
+            debug: function (msg) { if (orange.params.loglevel <= 0) this.log("DEBUG", msg) },
+            info: function (msg) { if (orange.params.loglevel <= 1) this.log("INFO", msg) },
+            error: function (msg) { if (orange.params.loglevel <= 2) this.log("ERROR", msg) },
+            throw: function (msg) { if (orange.params.loglevel <= 3) throw Error("[ ERROR ] >>> " + msg); },
+            log: function (type, msg) { console[type.toLowerCase() || "log"]("[" + type + "]", ">>>", msg); }
+        },
         exist: function (pluginKey) { return pluginKey in this.pluginCatch || pluginKey in this.variableCatch; },
         get: function (pluginKey) { return this.getVariable(pluginKey || this._prekey); },
         set: function (plugin, params) { return this.setVariable(this._prekey, plugin, params, true); },
@@ -135,13 +136,13 @@
         getVariable: function (pluginKey, must) {
             let val = this.pluginCatch[pluginKey] || this.variableCatch[pluginKey];
             if (!this.exist(pluginKey)) {
-                orange.LOGGER.error("[ " + pluginKey + " ] should be define");
+                this.LOGGER.error("[ " + pluginKey + " ] should be define");
             }
             return val;
         },
         setVariable: function (pluginKey, plugin, params, cover) {
             if (this.exist(pluginKey) && !cover) {
-                orange.LOGGER.throw("[ " + pluginKey + " ] try to set plugin but it is exist and cover is false")
+                this.LOGGER.throw("[ " + pluginKey + " ] try to set plugin but it is exist and cover is false")
             }
             if (orange.isArray(params)) {
                 this.setVariableWithParams(pluginKey, plugin, params, cover);
@@ -158,6 +159,7 @@
         },
         setVariableWithParams: function (pluginKey, plugin, params, cover) {
             if (orange.isFunction(plugin)) {
+                this.LOGGER.debug("execute " + pluginKey)
                 delete this.pluginCatch[pluginKey];
                 delete this.variableCatch[pluginKey];
                 let val = plugin.apply(this, params);
@@ -172,14 +174,14 @@
     function init(name) {
         var name = name;
         validKeyword(name, topKey);
-        this[name] = function (ns) {
+        this[name] = function (ns, args) {
             validKeyword(ns, topKey);
-            this[ns] = new orange();
+            this[ns] = new orange(args);
         }
     };
     function validKeyword(ns, name) {
-        if (this[ns] !== undefined) { orange.LOGGER.throw("[ " + ns + " ] has already exist in << " + name + " >>") }
-        if (!orange.isPluginKey(ns) || new RegExp("\\|" + ns + "\\|").test(existKey)) { orange.LOGGER.throw("[ " + ns + " ] is not a valid keyword") }
+        if (this[ns] !== undefined) { orange.fn.LOGGER.throw("[ " + ns + " ] has already exist in << " + name + " >>") }
+        if (!orange.isPluginKey(ns) || new RegExp("\\|" + ns + "\\|").test(existKey)) { orange.fn.LOGGER.throw("[ " + ns + " ] is not a valid keyword") }
     }
     init(name);
 })("ns");
